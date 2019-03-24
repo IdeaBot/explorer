@@ -1,0 +1,29 @@
+{
+  "version":{
+    "api":"v0.0.1",
+    "type":"ui-json"
+  },
+  "info":{
+    "name":null,
+    "description":"Like the old explorer but actually does something",
+    "help":"**Usage**\n```@Idea explore```\n**How to Play**\n`x` is you\n`t` and `c` are your friends\n`@` are enemies\n`0` are portals that will move you to the next dungeon\n\nClick on the arrows to move\nClick on a book to attack",
+    "package":"explorer",
+    "filepath":"addons/explorer/explorer.py",
+    "maintainers": [],
+    "owner": "106537989684887552"
+  },
+  "lifespan":-1,
+  "persistence":true,
+  "private":true,
+  "directOnly":true,
+  "shouldCreate":"shouldCreate",
+  "onCreate":"onCreate",
+  "onDelete":null,
+  "onPersist":null,
+  "onReaction":{ "⬅":"moveLeft", "⬆":"moveUp", "⬇":"moveDown", "➡":"moveRight", "📗":"attackOne", "📙":"attackTwo", "📘":"attackThree"},
+  "defaultEmbed":{
+    "title": "Explorer 2.0",
+    "description":"Exploration starting...",
+    "footer":{"text":"Made by NGnius", "icon_url":null}
+  }
+}

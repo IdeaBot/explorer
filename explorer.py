@@ -1,171 +1,145 @@
-from libs import plugin, dataloader, embed, savetome
-import discord, random
+from addons.UIdea.libs import ui as ui_class
+import re
+import random
+import json
+from addons.explorer.libs import dungeon, people
 
-DATAPATH='datafilepath'
-PATHDATAPATH = 'playerdatapath'
+DIALOG_JSON = 'addons/explorer/resources/dialogs.json'
+with open(DIALOG_JSON, 'r') as f:
+    DIALOGS = json.load(f)
+DUNGEON_DIALOGS = DIALOGS['ondungeon']
 
-class Plugin(plugin.OnMessagePlugin):
-    '''A simple demo application of the potential of plugins.
+INVENTORY_SLOTS = ["📗", "📙", "📘"]
 
-This is like an old text-based adventure, where you move from room to room by
-choosing the direction to move (or in this case, the direction of the portal
-to enter). Hopefully, in the future, this game will actually be interesting.
+class UI(ui_class.UI):
+    def shouldCreate(msg):
+        return collect_args(msg) is not None
 
-To enable explorer in a channel, do:
-```@Idea explore this channel``` '''
-    # movement words
-    UP = ["w", "up", "north"]
-    DOWN = ["s", "down", "south"]
-    LEFT = ["a", "left", "west"] # better than right
-    RIGHT = ["d", "right", "east"]
-
-    # constants, for loading & saving data
-    ROOMS = 'rooms'
-    TYPE = 'type'
-    PLAYERDATA = 'playerdata'
-    LOCATION = 'location'
-    INVENTORY = 'inventory'
-
-    # recognized types
-    UPLOC = 'up'
-    DOWNLOC = 'down'
-    LEFTLOC = 'left'
-    RIGHTLOC = 'right'
-
-    MOVE_ENDING = "\n \n Which portal do you want to go through?"
-
-    def __init__(self, **kwargs):
-        super().__init__(**kwargs)
-        self.fuck_off=False
-        self.load_data(self.config[DATAPATH], self.config[PATHDATAPATH])
-
-    async def action(self, message):
-        if not self.fuck_off:
-            if message.channel.id in self.public_namespace.exploring_channels:
-                self.fuck_off=True
-                did_something = False
-                message_lower = message.content.lower()
-                if message_lower in self.UP:
-                    if message.author.id in self.playerdata:
-                        self.move(message.author.id, type=self.UPLOC)
-                        # await self.send_message(message.channel, 'You move UP')
-                    else:
-                        self.new_game(message.author.id, type=self.UPLOC)
-                        # await self.send_message(message.channel, 'new game')
-                    did_something = True
-                elif message_lower in self.DOWN:
-                    if message.author.id in self.playerdata:
-                        self.move(message.author.id, type=self.DOWNLOC)
-                        # await self.send_message(message.channel, 'You move DOWN')
-                    else:
-                        self.new_game(message.author.id, type=self.DOWNLOC)
-                        # await self.send_message(message.channel, 'new game')
-                    did_something = True
-                elif message_lower in self.LEFT:
-                    if message.author.id in self.playerdata:
-                        self.move(message.author.id, type=self.LEFTLOC)
-                        # await self.send_message(message.channel, 'You move LEFT')
-                    else:
-                        self.new_game(message.author.id, type=self.LEFTLOC)
-                        # await self.send_message(message.channel, 'new game')
-                    did_something = True
-                elif message_lower in self.RIGHT:
-                    if message.author.id in self.playerdata:
-                        self.move(message.author.id, type=self.RIGHTLOC)
-                        # await self.send_message(message.channel, 'You move RIGHT')
-                    else:
-                        self.new_game(message.author.id, type=self.RIGHTLOC)
-                        # await self.send_message(message.channel, 'new game')
-                    did_something = True
-                if did_something:
-                    await self.send_message(message.channel, self.playerdata[message.author.id][self.LOCATION].description+self.MOVE_ENDING)
-                    self.save_data()
-                self.fuck_off=False
-
-    def shutdown(self):
-        self.save_data()
-
-    def new_game(self, player_id, type=None):
-        self.playerdata[player_id] = dict()
-        if type == None:
-            type = random.choice(list(self.locations))
-        self.playerdata[player_id][self.LOCATION] = self.locations[type][random.choice(list(self.locations[type]))]
-        self.playerdata[player_id][self.INVENTORY] = Inventory(user=player_id)
-
-    def move(self, player_id, type=None):
-        if type == None:
-            type = random.choice(list(self.locations))
-        self.playerdata[player_id][self.LOCATION] = self.locations[type][random.choice(list(self.locations[type]))]
-
-    def load_data(self, datafilepath, playerdatafilepath):
-        # load locations
-        self.datafile = dataloader.datafile(datafilepath)
-        self.locations=dict()
-        for type in self.datafile.content:
-            self.locations[type]=dict()
-            for location in self.datafile.content[type]:
-                self.locations[type][location]=Location(**self.datafile.content[type][location])
-
-        # load playerdata
-        self.playerdatafile = dataloader.loadfile_safe(playerdatafilepath)
-        if not isinstance(self.playerdatafile.content, dict):
-            self.playerdatafile.content = dict()
-        self.playerdata = dict()
-        for player_id in self.playerdatafile.content:
-            self.playerdata[player_id] = dict()
-            if self.LOCATION in self.playerdatafile.content[player_id]:
-                self.playerdata[player_id][self.LOCATION] = Location(**self.playerdatafile.content[player_id][self.LOCATION])
-            else:
-                self.playerdata[player_id][self.LOCATION] = Location()
-
-            if self.INVENTORY in self.playerdatafile.content[player_id]:
-                self.playerdata[player_id][self.INVENTORY] = Inventory(**self.playerdatafile.content[player_id][self.INVENTORY])
-            else:
-                self.playerdata[player_id][self.INVENTORY] = Inventory(player_id)
-
-
-    def save_data(self):
-        # save locations
-        for type in self.locations:
-            for location in self.locations[type]:
-                self.datafile.content[type][location] = self.locations[type][location].__dict__
-
-        # save playerdata
-        for player_id in self.playerdata:
-            self.playerdatafile.content[player_id] = dict()
-            self.playerdatafile.content[player_id][self.LOCATION] = self.playerdata[player_id][self.LOCATION].__dict__
-            self.playerdatafile.content[player_id][self.INVENTORY] = self.playerdata[player_id][self.INVENTORY].__dict__
-
-        # save to file
-        self.datafile.save()
-        self.playerdatafile.save()
-
-class Location():
-    def __init__(self, name=None, description=None, item=None):
-        '''(Location, str, str) -> Location'''
-
-        if description==None:
-            self.description = "You enter into a room with the default description"
+    def onCreate(self, msg):
+        if re.search(r'\s-v\b', msg.content) is None:
+            self.is_verbose = False
         else:
-            self.description=description
+            self.is_verbose = True
+        self.dungeon_num = 0
+        self.player = people.Player()
+        self.tenretni = people.Internet()
+        self.cixot = people.Toxic()
+        self._next_dungeon()
+        # build fields
+        self.embed.add_field(name='Inventory', value='Work In Progress')  # field 0 for inventory
+        self.embed.add_field(name='Level %s' % self.player.level, value=self._make_stats_str(self.player)) # field 1 for stats
+        self.embed.add_field(name='Dialog', value='.')
+        if self.is_verbose:
+            self.embed.add_field(name='Debug', value='.') # field 3 for debug
+        self._update_embed()
 
-        if name == None:
-            self.name = plugin.DEFAULT
+    def attackOne(self, reaction, user):
+        if self.player.health == 0:
+            return
+        self.player.attack(1, target=self.player.get_target())
+        self._do_turn()
+
+    def attackTwo(self, reaction, user):
+        if self.player.health == 0:
+            return
+        self.player.attack(2, target=self.player.get_target())
+        self._do_turn()
+
+    def attackThree(self, reaction, user):
+        if self.player.health == 0:
+            return
+        self.player.attack(3, target=self.player.get_target())
+        self._do_turn()
+
+    def moveLeft(self, reaction, user):
+        if self.player.health == 0:
+            return
+        self.player.move_left()
+        self._do_turn()
+
+    def moveRight(self, reaction, user):
+        if self.player.health == 0:
+            return
+        self.player.move_right()
+        self._do_turn()
+
+    def moveUp(self, reaction, user):
+        if self.player.health == 0:
+            return
+        self.player.move_up()
+        self._do_turn()
+
+    def moveDown(self, reaction, user):
+        if self.player.health == 0:
+            return
+        self.player.move_down()
+        self._do_turn()
+
+    def _update_embed(self):
+        self.embed.description = '```' + self.current_dungeon.draw_board() + '```'
+        # Populate inventory
+        self.embed.set_field_at(0, name='Inventory', value=self._make_inventory_str(self.player))
+        # Populate inventory
+        self.embed.set_field_at(1, name='Level %s' % self.player.level, value=self._make_stats_str(self.player))
+        self.embed.set_field_at(2, name='Dialog', value=self._make_dialog())
+        if self.is_verbose:
+            # Populate debug
+            self.embed.set_field_at(3, name='Debug', value='.')
+        self.update()
+
+    def _make_inventory_str(self, person):
+        if len(person.inventory) > 0:
+            inv_str = ''
+            for n in range(3):
+                if len(person.inventory) > n:
+                    i = person.inventory[n]
+                    inv_str += INVENTORY_SLOTS[n]
+                    inv_str += + ' ' + i['name']
+                    inv_str += ' **(+' + i['damage'] + ')**'
+                    inv_str += '\n'
+            return inv_str
         else:
-            self.name = name
+            return INVENTORY_SLOTS[0] + ' nothing **(+0)**'
 
-        if item == None or item == "":
-            self.item=None
+
+    def _make_stats_str(self, person):
+        stats_str = ''
+        stats_str += 'HP: ' + str(person.health) + '/' + str(person.basehealth*person.level) + '\n'
+        stats_str += 'DMG: ' + str(person.damage) + '\n'
+        stats_str += 'SPD: ' + str(person.speed) + '\n'
+        return stats_str
+
+    def _make_dialog(self):
+        if self.player.health == 0:
+            return '**You died :\'(**'
+        if str(self.dungeon_num) in DUNGEON_DIALOGS and DUNGEON_DIALOGS[str(self.dungeon_num)] != '':
+            return DUNGEON_DIALOGS[str(self.dungeon_num)]
         else:
-            self.item=item
+            return self.embed.fields[2].value
 
-class Inventory():
-    def __init__(self, items=list(), user=None):
-        '''(Inventory, list, str) -> Inventory '''
+    def _next_dungeon(self):
+        self.dungeon_num += 1
+        self.current_dungeon = dungeon.Dungeon(level=self.dungeon_num)
+        # spawn enemies
+        for i in range(random.randint(1, (self.dungeon_num//2)+1)):
+            people.Outside(self.current_dungeon)
+        if random.choice([True, False]):
+            people.Polite(self.current_dungeon)
+        # teleport friendlies
+        self.player.teleport(self.current_dungeon)
+        self.tenretni.teleport(self.current_dungeon)
+        self.cixot.teleport(self.current_dungeon)
 
-        if user!=None:
-            self.items=list(items)
-            self.user = user
-        else:
-            user = '0'*18
-            self.items=list()
+    def _do_turn(self):
+        self.current_dungeon.do_turn()
+        self._update_embed()
+        if self.current_dungeon.find_person(self.player.name) is None:
+            # you dead son
+            return
+        if self.current_dungeon.find_person(self.player.name) in self.current_dungeon.portals:
+            self._next_dungeon()
+            self._update_embed()
+
+
+def collect_args(msg):
+    return re.search(r'\bexplore\b', msg.content, re.I)

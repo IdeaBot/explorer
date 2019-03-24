@@ -1,0 +1,38 @@
+{
+  "ondungeon": {
+    "1":"(Cixot) We’re stuck here alone. This sucks, when can we leave?\n(You) But we just got here...",
+    "2":"(Tenretni) This place reminds me of a video game I used to play...\n(You) We’re playing it right now.\n(Cixot) I liked it better back then.",
+    "3":"",
+    "4":"",
+    "5":"(You) This is a cool dungeon.\n(Tenretni) This dungeon is like every other dungeon we’ve been to.",
+    "6":"",
+    "7":"(Tenretmi) So where are we going?\n(Cixot) Hopefully somewhere better than this.",
+    "8":"",
+    "9":"",
+    "10":"(You) Exploring isn’t so bad.\n(Cixot) It’s not like we have any other option...",
+    "11":"",
+    "12":"",
+    "13":"",
+    "14":"",
+    "15":"",
+    "16":"",
+    "17":"",
+    "18":"",
+    "19":"",
+    "20":"(Tenretni) 20th dungeon. Imagine what’s still in store.\n(Cixot) Nothing, this is the end of the programmed dialog.",
+    "21":"",
+    "22":"",
+    "23":"",
+    "24":"",
+    "25":"(You) Cixot, sometimes you just make up things to be mad about.",
+    "26":"",
+    "27":"",
+    "28":"",
+    "29":"",
+    "30":""
+  },
+  "ondefeat": {
+    "edistou": ["I pity your next opponent", "Relaxing in the sun has left me weak", "You will regret this day"],
+    "etilop": ["I'm sorry", "No worries mate"]
+  }
+}
