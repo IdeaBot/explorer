@@ -8,8 +8,7 @@ This is a demo """game""".
 This outlines the functionality of each command.
 Use `@Idea help <command name>` to get usage instructions.
 
-* channeladder
-> Add/Remove a channel to explore.
-
 * explorer
 > Explore a randomly generated set of rooms.
+>
+> This is a UI; use `@Idea help UI explorer` for usage instructions.
