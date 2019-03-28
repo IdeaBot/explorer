@@ -96,8 +96,8 @@ class Dungeon():
         return coords
 
     def _verify_coords(self, coords):
-        if coords[0] > WIDTH or coords[0] < 0:
+        if coords[0] >= WIDTH or coords[0] < 0:
             return False
-        if coords[1] > self.size or coords[1] < 0:
+        if coords[1] >= self.size or coords[1] < 0:
             return False
         return True
